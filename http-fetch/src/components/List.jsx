@@ -1,16 +1,19 @@
 var React = require('react');
 var ListItem = require('./ListItem.jsx');
-var HTTP = require('../services/httpservice');
+var Reflux = require('reflux');
+var Actions = require('../reflux/actions.jsx');
+var IngredientStore = require('../reflux/ingredients-store.jsx');
 
 var List = React.createClass({
+    mixins: [Reflux.listenTo(IngredientStore, 'onChange')],
     getInitialState: function() {
         return {ingredients: []};
     },
     componentWillMount: function() {
-        HTTP.get('/ingredients')
-        .then(function(data) {
-            this.setState({ingredients: data});
-        }.bind(this));
+        Actions.getIngredients();
+    },
+    onChange: function(event, ingredients) {
+        this.setState({ingredients: ingredients});
     },
     render: function() {
         var listItems = this.state.ingredients.map(function(item) {

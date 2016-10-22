@@ -22,6 +22,7 @@
     "babelify": "*",
     "react": "*",
     "react-dom": "*",
+    "reflux": "*",
     "watchify": "*",
     "whatwg-fetch": "*"
   }
