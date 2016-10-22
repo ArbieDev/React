@@ -22550,7 +22550,7 @@ var List = React.createClass({
 
     mixins: [Reflux.listenTo(IngredientStore, 'onChange')],
     getInitialState: function () {
-        return { ingredients: [] };
+        return { ingredients: [], newText: "" };
     },
     componentWillMount: function () {
         Actions.getIngredients();
@@ -22558,15 +22558,35 @@ var List = React.createClass({
     onChange: function (event, ingredients) {
         this.setState({ ingredients: ingredients });
     },
+    onInputChange: function (e) {
+        this.setState({ newText: e.target.value });
+    },
+    onClick: function (e) {
+        if (this.state.newText) {
+            Actions.postIngredient(this.state.newText);
+        }
+
+        this.setState({ newText: "" });
+    },
     render: function () {
         var listItems = this.state.ingredients.map(function (item) {
             return React.createElement(ListItem, { key: item.id, ingredient: item.text });
         });
 
         return React.createElement(
-            'ul',
+            'div',
             null,
-            listItems
+            React.createElement('input', { placeholder: 'Add Item', value: this.state.newText, onChange: this.onInputChange }),
+            React.createElement(
+                'button',
+                { onClick: this.onClick },
+                'Add Item'
+            ),
+            React.createElement(
+                'ul',
+                null,
+                listItems
+            )
         );
     }
 });
@@ -22620,7 +22640,22 @@ var IngredientStore = Reflux.createStore({
             this.fireUpdate();
         }.bind(this));
     },
-    postIngredient: function (text) {},
+    postIngredient: function (text) {
+        if (!this.ingredients) {
+            this.ingredients = [];
+        }
+        var ingredient = {
+            "id": Math.random().toString(36).substr(2, 6),
+            "text": text
+        };
+
+        this.ingredients.push(ingredient);
+        this.fireUpdate();
+
+        HTTP.post('/ingredients', ingredient).then(function (response) {
+            this.getIngredients();
+        }.bind(this));
+    },
     fireUpdate: function () {
         this.trigger('change', this.ingredients);
     }
@@ -22636,6 +22671,18 @@ var service = {
     get: function (url) {
         return fetch(baseUrl + url).then(function (response) {
             return response.json();
+        });
+    },
+    post: function (url, ingredient) {
+        return fetch(baseUrl + url, {
+            headers: {
+                'Accept': 'text/plain',
+                'Content-Type': 'application/json'
+            },
+            method: 'post',
+            body: JSON.stringify(ingredient)
+        }).then(function (response) {
+            return response;
         });
     }
 };
